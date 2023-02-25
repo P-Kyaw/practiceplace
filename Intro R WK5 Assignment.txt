@@ -1,0 +1,34 @@
+# If you are working on your local Jupyter notebook, please uncomment the below code and install the packages
+
+#install.packages("httr")
+#install.packages("rvest")
+
+install.packages("rvest")
+
+install.packages("httr")
+
+#require("httr")
+#require("rvest")
+library("rvest")
+
+library("httr")
+
+get_wiki_covid19_page <- function() {
+    GET('https://en.wikipedia.org/w/index.php?title=Template:COVID-19_testing_by_country')
+    }
+wiki_base_url <- "https://en.wikipedia.org/w/index.php"
+title <- list("Template:COVID-19_testing_by_country")
+get_wiki_covid19_page()
+return(get_wiki_covid19_page())
+
+root_html <- read_html(get_wiki_covid19_page())
+print(root_html)
+
+covid_table_node <- html_nodes(root_html, "table")
+covid_table_node
+
+covid19_df <- as.data.frame(html_table(covid_table_node))
+covid19_df
+
+summary_COVID19<-summary(covid19_df)
+
