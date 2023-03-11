@@ -24,11 +24,51 @@ return(get_wiki_covid19_page())
 root_html <- read_html(get_wiki_covid19_page())
 print(root_html)
 
-covid_table_node <- html_nodes(root_html, "table")
+covid19_df <- as.data.frame(html_table(covid_table_node[2]))
 covid_table_node
 
 covid19_df <- as.data.frame(html_table(covid_table_node))
 covid19_df
 
 summary_COVID19<-summary(covid19_df)
+print(summary_COVID19)
 
+preprocess_covid_data_frame <- function(data_frame) {
+    
+    shape <- dim(data_frame)
+
+    # Remove the World row
+    data_frame<-data_frame[!(data_frame$`Country or region`=="World"),]
+    # Remove the last row
+    data_frame <- data_frame[1:172, ]
+    
+    # We dont need the Units and Ref columns, so can be removed
+    data_frame["Ref."] <- NULL
+    data_frame["Units[b]"] <- NULL
+    
+    # Renaming the columns
+    names(data_frame) <- c("country", "date", "tested", "confirmed", "confirmed.tested.ratio", "tested.population.ratio", "confirmed.population.ratio")
+    
+    # Convert column data types
+    data_frame$country <- as.factor(data_frame$country)
+    data_frame$date <- as.factor(data_frame$date)
+    data_frame$tested <- as.numeric(gsub(",","",data_frame$tested))
+    data_frame$confirmed <- as.numeric(gsub(",","",data_frame$confirmed))
+    data_frame$'confirmed.tested.ratio' <- as.numeric(gsub(",","",data_frame$`confirmed.tested.ratio`))
+    data_frame$'tested.population.ratio' <- as.numeric(gsub(",","",data_frame$`tested.population.ratio`))
+    data_frame$'confirmed.population.ratio' <- as.numeric(gsub(",","",data_frame$`confirmed.population.ratio`))
+    
+    return(data_frame)
+}
+
+C19_df<-preprocess_covid_data_frame(covid19_df)
+C19_df
+
+print(summary(C19_df))
+
+write.csv(C19_df,row.names=FALSE)
+
+wd <- getwd()
+file_path <- paste(wd, sep="", "/covid.csv")
+print(file_path)
+file.exists(file_path)
