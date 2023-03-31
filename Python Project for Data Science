@@ -1,9 +1,10 @@
 # Analyzing Historical Stock/Revenue Data and Building a Dashboard
 !pip install yfinance==0.1.67
 !mamba install bs4==4.10.0 -y
-!mamba install html55lib==1.1 -y
+!mamba install html5lib==1.1 -y
 !pip install lxml==4.6.4
-!pip install nbformat==4.2.0
+!pip install nbformat==5.7.0
+!pip install html5lib
 import yfinance as yf
 import pandas as pd
 import requests
@@ -30,4 +31,45 @@ def make_graph(stock_data, revenue_data, stock):
     tesla_data.reset_index(inplace=True)
 tesla_data.head()
 html_data = requests.get("https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-PY0220EN-SkillsNetwork/labs/project/revenue.htm").text
-bs=BeautifulSoup(html_data,"html5lib")
+#bs=BeautifulSoup(html_data,"html5lib") 
+bs=BeautifulSoup(html_data,"html.parser")
+tables=bs.find_all("table")
+for index,table in enumerate(tables):
+    if("Tesla Quarterly Revenue" in str(table)):
+        table_index=index
+tesla_revenue=pd.DataFrame(columns=["Date","Revenue"])
+
+for row in tables[table_index].tbody.find_all('tr'):
+    col=row.find_all("td")
+    if(col!=[]):
+        date=col[0].text
+        revenue=col[1].text.strip().replace("$","").replace(",","")
+        tesla_revenue=tesla_revenue.append({"Date":date,"Revenue":revenue},ignore_index=True)
+tesla_revenue.head()
+tesla_revenue["Revenue"] = tesla_revenue['Revenue'].str.replace(',|\$',"")
+tesla_revenue.dropna(inplace=True)
+
+tesla_revenue = tesla_revenue[tesla_revenue['Revenue'] != ""]
+tesla_revenue.tail()
+gamestop=yf.Ticker('GME')
+gme_data=gamestop.history(period='max')
+game_data.reset_index(inplace=True)
+game_data.head()
+html_data1=requests.get('https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-PY0220EN-SkillsNetwork/labs/project/stock.html').text
+b=BeautifulSoup(html_data1,'html.parser')
+tables=b.find_all("table")
+for index,table in enumerate(tables):
+    if("GameStop Quarterly Revenue" in str(table)):
+        table_index=index
+gme_revenue=pd.DataFrame(columns=["Date","Revenue"])
+
+for row in tables[table_index].tbody.find_all('tr'):
+    col=row.find_all("td")
+    if(col!=[]):
+        date=col[0].text
+        revenue=col[1].text.strip().replace("$","").replace(",","")
+        gme_revenue=gme_revenue.append({"Date":date,"Revenue":revenue},ignore_index=True)
+gme_revenue.head()
+gme_revenue.tail()
+make_graph(tesla_data, tesla_revenue, 'Tesla')
+make_graph(gme_data, gme_revenue, 'GameStop')
